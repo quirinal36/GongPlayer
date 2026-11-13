@@ -63,6 +63,7 @@ foreach ($s in @(@($ffsrc, $lock.FFMPEG_SRC_SHA256), @($dvsrc, $lock.DAV1D_SRC_S
 
 Remove-Item -Recurse -Force $stage
 $files = Get-ChildItem $out -File | Sort-Object Name
-$files | ForEach-Object { "{0}  {1}" -f (Get-FileHash $_.FullName -Algorithm SHA256).Hash.ToLower(), $_.Name } |
-    Set-Content (Join-Path $out 'SHA256SUMS.txt') -Encoding ascii
+# sha256sum -c가 바로 읽도록 LF 줄바꿈으로 씁니다.
+$sums = ($files | ForEach-Object { "{0}  {1}" -f (Get-FileHash $_.FullName -Algorithm SHA256).Hash.ToLower(), $_.Name }) -join "`n"
+[IO.File]::WriteAllText((Join-Path $out 'SHA256SUMS.txt'), "$sums`n", (New-Object Text.ASCIIEncoding))
 Get-ChildItem $out -File | ForEach-Object { "{0,-40} {1,10:N0} bytes" -f $_.Name, $_.Length }
