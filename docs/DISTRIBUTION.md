@@ -20,7 +20,7 @@ Store 설치는 기존의 "다음 → 다음 → 완료" 마법사와 다른 표
 | 경로 | 역할 | 준비 사항 |
 |---|---|---|
 | Microsoft Store의 MSIX | 기본 공개 배포 | 패키지, Store 계정과 등록 자료, 심사 |
-| 홈페이지의 MSI/EXE 설치 마법사 | 필요 시 추가 | 게시자 코드 서명, 호스팅, 업데이트 방식, 설치·제거 검증 |
+| GitHub Release의 설치 프로그램(Inno Setup)과 포터블 ZIP | 보조 배포 (D29) | 서명 없음(SmartScreen 경고), 사용자 단위 설치, 업데이트는 새 버전을 받아 덮어 설치. `scripts/package-release.ps1` |
 | 직접 배포하는 MSIX | 필요 시 추가 | 신뢰할 수 있는 서명과 업데이트 경로. Store에 등록하는 것과 별도 |
 
 ## "알 수 없는 게시자"와 SmartScreen
