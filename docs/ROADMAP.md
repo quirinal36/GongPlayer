@@ -19,7 +19,7 @@ MVP까지 일곱 단계입니다. 위험한 것을 먼저 확인하는 순서로
 코드를 본격적으로 쓰기 전에, 계획을 뒤집을 수 있는 것부터 확인합니다.
 
 - [x] `git init`, Cargo 프로젝트, 릴리스 프로필
-- [ ] CI: Windows 러너에서 `fmt`, `clippy`, 빌드, 테스트 (워크플로 작성, 원격 실행은 아직 확인하지 못함)
+- [x] CI: Windows 러너에서 `fmt`, `clippy`, 빌드, 테스트 (2026-11-13 첫 실행 통과, 약 3분. 개발용 DLL 빌드와 MSIX 생성까지)
 - [x] 개발용 FFmpeg 고정: 사전 빌드 `win64-lgpl-shared`를 URL과 sha256으로 고정
 - [x] 개발 흐름 결정: 현재 Windows PC에서 직접 개발하고 실행 (2026-11-13, D14)
 - [x] Rust/MSVC, Windows SDK, FFmpeg 관련 개발 도구 설치 상태와 버전 확인 ([BUILD](BUILD.md))
