@@ -1,30 +1,27 @@
-# 패키지 로고와 실행 파일 아이콘을 만듭니다. 이미지 파일을 손으로 그리지 않고 도형으로 생성합니다.
+# 패키지 로고와 실행 파일 아이콘을 만듭니다. 원본은 packaging/source/icon-ball.png
+# (불꽃 다섯 개가 그려진 공, 1024px, 투명 배경)이고, 크기마다 고품질로 줄여 투명 캔버스 가운데에 놓습니다.
 # 사용: pwsh scripts/make-assets.ps1   결과: packaging/Assets/*.png, packaging/gongplayer.ico
 $ErrorActionPreference = 'Stop'
 Add-Type -AssemblyName System.Drawing
 $root = Split-Path -Parent $PSScriptRoot
 $assets = Join-Path $root 'packaging/Assets'
 New-Item -ItemType Directory -Force $assets | Out-Null
+$source = [System.Drawing.Image]::FromFile((Join-Path $root 'packaging/source/icon-ball.png'))
 
 function Draw-Logo([int]$w, [int]$h, [double]$fill) {
     $bmp = New-Object System.Drawing.Bitmap $w, $h
     $g = [System.Drawing.Graphics]::FromImage($bmp)
+    $g.InterpolationMode = 'HighQualityBicubic'
     $g.SmoothingMode = 'AntiAlias'
+    $g.PixelOffsetMode = 'HighQuality'
+    $g.CompositingQuality = 'HighQuality'
     $g.Clear([System.Drawing.Color]::Transparent)
     $d = [Math]::Min($w, $h) * $fill
     $x = ($w - $d) / 2; $y = ($h - $d) / 2
-    # 공(원) 안에 재생 삼각형
-    $bg = New-Object System.Drawing.SolidBrush ([System.Drawing.Color]::FromArgb(255, 24, 28, 36))
-    $g.FillEllipse($bg, [single]$x, [single]$y, [single]$d, [single]$d)
-    $ring = New-Object System.Drawing.Pen ([System.Drawing.Color]::FromArgb(255, 255, 196, 0)), ([single]($d * 0.06))
-    $g.DrawEllipse($ring, [single]($x + $d * 0.03), [single]($y + $d * 0.03), [single]($d * 0.94), [single]($d * 0.94))
-    $cx = $w / 2 + $d * 0.05; $cy = $h / 2; $r = $d * 0.26
-    $pts = @(
-        (New-Object System.Drawing.PointF ([single]($cx - $r * 0.8)), ([single]($cy - $r))),
-        (New-Object System.Drawing.PointF ([single]($cx + $r)), ([single]$cy)),
-        (New-Object System.Drawing.PointF ([single]($cx - $r * 0.8)), ([single]($cy + $r)))
-    )
-    $g.FillPolygon([System.Drawing.Brushes]::White, $pts)
+    $attr = New-Object System.Drawing.Imaging.ImageAttributes
+    $attr.SetWrapMode('TileFlipXY')   # 가장자리 픽셀이 바깥 투명과 섞여 흐려지지 않게 합니다
+    $dest = New-Object System.Drawing.Rectangle ([int][Math]::Round($x)), ([int][Math]::Round($y)), ([int][Math]::Round($d)), ([int][Math]::Round($d))
+    $g.DrawImage($source, $dest, 0, 0, $source.Width, $source.Height, [System.Drawing.GraphicsUnit]::Pixel, $attr)
     $g.Dispose()
     return $bmp
 }

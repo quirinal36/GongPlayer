@@ -70,7 +70,7 @@ Store 패키징과 설치 검증은 [DISTRIBUTION](DISTRIBUTION.md)을 따릅니
 |---|---|
 | `scripts/fetch-ffmpeg.ps1` | 개발용 FFmpeg 사전 빌드를 받고 sha256을 확인 |
 | `scripts/make-test-media.ps1` | 합성 테스트 영상을 `.deps/media`에 생성 |
-| `scripts/make-assets.ps1` | 패키지 로고와 실행 파일 아이콘을 도형으로 생성 (`packaging/`) |
+| `scripts/make-assets.ps1` | `packaging/source/icon-ball.png`로 패키지 로고와 실행 파일 아이콘을 생성 (`packaging/`, D28) |
 | `scripts/build-ffmpeg-static.ps1` | 배포용 최소 구성 FFmpeg를 MSVC로 정적 빌드 (`.deps/ffmpeg-static`) |
 | `scripts/package-msix.ps1` | 릴리스 빌드를 MSIX로 묶고 실행 코드·설치·압축 크기를 출력. `-Static`이면 정적 FFmpeg로 빌드 |
 | `scripts/dev-install.ps1` | 개발용 자체 서명 인증서로 서명해 이 PC에 설치, `-Uninstall`로 제거 (처음 한 번 관리자 승인) |
