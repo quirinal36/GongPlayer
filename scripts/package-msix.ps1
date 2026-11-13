@@ -52,6 +52,7 @@ foreach ($dll in $(if ($Static) { @() } else { Get-ChildItem $ffbin -Filter '*.d
 }
 Copy-Item packaging\Assets\* (Join-Path $layout 'Assets')
 if (Test-Path THIRD_PARTY_NOTICES.md) { Copy-Item THIRD_PARTY_NOTICES.md $layout }
+Copy-Item LICENSE (Join-Path $layout 'LICENSE.txt')   # GongPlayer 자체 라이선스 (MPL-2.0)
 if ($Static) {
     # 최소 구성은 외부 라이브러리 없이 FFmpeg만 들어 있으므로 LGPL 2.1 원문을 싣습니다.
     $lic = Get-ChildItem .deps\src -Recurse -Filter 'COPYING.LGPLv2.1' -ErrorAction SilentlyContinue | Select-Object -First 1

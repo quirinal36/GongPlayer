@@ -55,3 +55,7 @@ GongPlayer는 디코더(FFmpeg)를 앱에 포함하고, 가능하면 GPU 드라�
 | [BUILD](docs/BUILD.md) | 개발 환경, FFmpeg 빌드, 테스트, 라이선스 |
 | [DISTRIBUTION](docs/DISTRIBUTION.md) | Microsoft Store, MSIX, 서명과 설치 경험, 공개 배포 준비 |
 | [DECISIONS](docs/DECISIONS.md) | 결정 기록과 아직 정하지 않은 것 |
+
+## 라이선스
+
+GongPlayer는 [Mozilla Public License 2.0](LICENSE)으로 배포합니다. 함께 들어 있는 FFmpeg(LGPL 2.1 이상), dav1d(BSD 2-Clause)와 Rust crate의 라이선스는 [THIRD_PARTY_NOTICES](THIRD_PARTY_NOTICES.md)에 있습니다. 개인정보처리방침은 [PRIVACY](PRIVACY.md)에 있습니다.

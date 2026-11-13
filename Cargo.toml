@@ -5,6 +5,8 @@ edition = "2024"
 rust-version = "1.93"
 publish = false
 description = "Windows용 초경량 동영상 플레이어"
+license = "MPL-2.0"
+repository = "https://github.com/quirinal36/GongPlayer"
 
 [dependencies]
 # windows가 이미 쓰는 crate. Direct2D 좌표 타입(Vector2)이 여기에만 있습니다.

@@ -222,8 +222,8 @@ CI 러너에는 GPU가 없어 하드웨어 디코딩과 화면 출력은 자동�
 
 - 소스 공개만으로 LGPL 조건이 자동 충족된다고 판단하지 않습니다. 배포한 FFmpeg에 대응하는 소스, 변경 사항, 빌드 방법, 고지문을 준비하고, 정적 링크를 선택하면 사용자가 수정한 라이브러리로 다시 링크할 수 있는 자료와 절차도 검증합니다. DLL 방식에도 라이선스 의무는 남습니다.
 - 공개 배포가 목표이므로 HEVC 등 포함 코덱의 특허·라이선스 검토를 M0부터 시작합니다. 배포 지역과 유·무료 여부 등 실제 조건을 기준으로 확인하며, FFmpeg의 오픈소스 라이선스와 Store 심사가 코덱 특허 이용 허락을 대신한다고 가정하지 않습니다.
-- GongPlayer 자체의 라이선스는 아직 정하지 않았습니다 ([DECISIONS](DECISIONS.md)의 미결 항목).
+- GongPlayer 자체는 MPL-2.0입니다 (`LICENSE`, [DECISIONS](DECISIONS.md)의 D26). 소스가 공개되어 있어 FFmpeg를 바꿔 다시 링크할 수 있습니다. 배포할 때는 대응하는 FFmpeg·dav1d 소스 압축 파일을 같은 Release에 올립니다.
 - 개발용 패키지는 BtbN 빌드를 그대로 싣고 그 `LICENSE.txt`를 `FFMPEG_LICENSE.txt`로 함께 넣습니다. 배포용 정적 패키지(`-Static`)는 FFmpeg 소스의 `COPYING.LGPLv2.1`을 `FFMPEG_LICENSE.txt`로 넣고, `THIRD_PARTY_NOTICES.md`에 소스 URL, sha256, 빌드 스크립트 위치를 적습니다.
-- 정적 링크는 재링크 자료가 필요합니다. GongPlayer 소스를 공개하면 소스와 빌드 방법으로, 공개하지 않으면 링크 가능한 목적 파일과 절차로 제공해야 합니다. 어느 쪽인지는 프로젝트 라이선스 결정에 달려 있습니다 (D24).
+- 정적 링크는 재링크 자료가 필요합니다. GongPlayer는 소스를 공개하므로 소스와 빌드 방법으로 제공합니다 (D24, D26).
 
 참고: [FFmpeg 공식 라이선스 안내](https://ffmpeg.org/legal.html). 공개 배포 전에 적용 조건을 별도로 확인합니다.
