@@ -156,7 +156,7 @@ MVP까지 일곱 단계입니다. 위험한 것을 먼저 확인하는 순서로
 - [ ] `THIRD_PARTY_NOTICES`, 프로젝트 라이선스 결정 (고지문 생성 스크립트와 현재 고지문은 있음. 라이선스는 사용자 결정 대기)
 - [ ] FFmpeg 대응 소스와 빌드·재링크 자료, 공개 배포 라이선스 검토 결과 정리
 - [ ] 깨끗한 Windows에서 설치, HEVC 재생, 업데이트, 제거 검증
-- [ ] Windows App Certification Kit 검사, Store 설명·스크린샷·지원 및 개인정보처리방침 URL 준비
+- [ ] Windows App Certification Kit 검사, Store 설명·스크린샷·지원 및 개인정보처리방침 URL 준비 (인증 키트 PASS, 개인정보처리방침 URL 있음. 설명·스크린샷 남음)
 - [ ] Partner Center 계정·앱 이름·Identity 연결, 제출할 패키지와 심사 설명 준비
 - [ ] Store 제출 및 심사 결과 기록, Store 경로의 실제 설치 검증
 

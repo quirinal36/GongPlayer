@@ -73,7 +73,7 @@ Windows SDK의 `MakeAppx.exe`로 패키지를 만드는 스크립트를 M0에서
 - Store ID `9PGQL0Q90CGF`, 링크 https://apps.microsoft.com/detail/9PGQL0Q90CGF (승인 전에는 열리지 않음)
 - 패키지 Identity: Name `letscoding.GongPlayer`, Publisher `CN=B3FB09CC-66A1-4A25-AE74-EBFF02F06617`, PublisherDisplayName `letscoding`, PFN `letscoding.GongPlayer_ykcjhq69qknkg`. `scripts/package-msix.ps1 -Store`에 들어 있습니다.
 - Store 제출용 패키지: `pwsh scripts/package-msix.ps1 -Store` → `dist/GongPlayer_<버전>_x64.msix` (정적 빌드, 서명 없음, 버전 네 번째 자리 0). 0.1.0은 압축 3.43MB입니다.
-- 인증 키트 검사: `pwsh scripts/run-wack.ps1` (관리자 권한 필요). 아직 실행하지 않았습니다.
+- 인증 키트 검사: `pwsh scripts/run-wack.ps1` (관리자 권한 필요). 2026-11-14 0.1.0.0 Store 패키지로 실행해 **전체 PASS (24개 항목 모두 통과, 경고 없음)**, Windows 11 Pro.
 
 ## Partner Center와 Store 등록 절차
 
