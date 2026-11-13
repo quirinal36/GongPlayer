@@ -51,12 +51,13 @@ Windows SDK의 `MakeAppx.exe`로 패키지를 만드는 스크립트를 M0에서
 **2026-11-13 진행 상황 (M0 스파이크 C)**
 
 - `scripts/package-msix.ps1`이 실제 플레이어로 MSIX를 만듭니다. 매니페스트 원본은 `packaging/AppxManifest.xml`이고 Identity·게시자·버전을 스크립트가 채웁니다. `runFullTrust`, 최소 Windows 10.0.19041, x64, 파일 연결(`.mp4 .m4v .mov .mkv .webm .ts .m2ts .mts .avi`, 경로를 `"%1"`로 첫 인자에 전달)을 선언했습니다. 로고는 `scripts/make-assets.ps1`이 도형으로 만듭니다.
-- 개발용(FFmpeg DLL 포함)은 실행 코드 143MB, MSIX 압축 62MB입니다. 배포용 `-Static`(최소 구성 FFmpeg 정적 링크)은 실행 파일 하나 6.35MB, MSIX 압축 2.47MB, 설치 6.44MB입니다.
+- 개발용(FFmpeg DLL 포함)은 실행 코드 143MB, MSIX 압축 62MB입니다. 배포용 `-Static`(최소 구성 FFmpeg와 dav1d 정적 링크)은 실행 파일 하나 8.13MB, MSIX 압축 3.18MB, 설치 8.21MB입니다.
 - 서명 없는 패키지는 설치되지 않습니다. Windows 11의 서명 없는 패키지 설치(`Add-AppxPackage -AllowUnsigned`, 게시자에 OID `2.25.311729368913984317654407730594956997722=1`)를 시도했지만 "서명되지 않은 패키지에 실행 가능한 활성화를 포함할 수 없다"(0x80073D2B)로 거부됐습니다.
 - 그래서 개발용 설치는 `scripts/dev-install.ps1`로 합니다. 현재 사용자 저장소에 자체 서명 인증서(`CN=GongPlayer Dev`, 개인 키 내보내기 불가)를 만들어 서명하고, 그 공개 인증서를 "로컬 컴퓨터\신뢰할 수 있는 사용자"에 넣습니다. 이 단계에만 처음 한 번 관리자 승인(UAC)이 필요합니다. 기본은 배포용 정적 빌드로 설치하고, `-Dev`면 개발용 DLL 빌드로 설치합니다.
 - **확인함 (2026-11-13, 기준 PC, 정적 빌드 패키지)**: 서명한 패키지가 일반 사용자 권한으로 설치되고(`C:\Program Files\WindowsApps\GongPlayer.Dev_…`), 앱 ID로 실행하면 빈 상태 화면이 뜹니다(시작 메뉴와 같은 경로). 패키지가 등록한 `.mp4` 파일 연결 ProgID로 `TestVideos/a.mp4`를 열면 `"…\GongPlayer.exe" "….mp4"`로 경로가 첫 인자에 전달되어 재생됩니다. 제거하면 패키지와 설치 폴더가 모두 사라지고, 다시 설치됩니다.
 - 처음 시도에서 `dev-install.ps1`이 `package-msix.ps1`에 인자를 배열로 넘겨 게시자 자리에 `GongPlayer.Dev`가 들어가, 매니페스트 검증에서 `makeappx`가 실패했습니다. 해시테이블로 넘기도록 고쳤습니다.
-- 확인 못 함: 탐색기에서 사람이 "연결 프로그램"을 고르는 것 (같은 ProgID 경로), 업데이트(버전을 올린 패키지로 덮어 설치), 개발 도구가 없는 깨끗한 Windows.
+- 업데이트: 같은 버전 번호로 내용을 바꾸면 Windows가 설치를 거부합니다. `dev-install.ps1`은 버전의 네 번째 자리를 매번 올려 덮어쓰기 업데이트를 하며, 0.1.0.0에서 0.1.0.992로 업데이트되는 것을 확인했습니다. Store 제출용은 네 번째 자리를 0으로 둡니다 (`package-msix.ps1 -Revision`의 기본값).
+- 확인 못 함: 탐색기에서 사람이 "연결 프로그램"을 고르는 것 (같은 ProgID 경로), 개발 도구가 없는 깨끗한 Windows.
 - Store 제출용 패키지는 Store가 서명하므로 이 인증서와 무관합니다. Identity Name과 Publisher는 Partner Center 값으로 `-Name`, `-Publisher`, `-PublisherDisplay`를 넘겨 만듭니다. 참고: [매니페스트와 패키지 구성](https://learn.microsoft.com/en-us/windows/msix/desktop/desktop-to-uwp-manual-conversion), [MakeAppx](https://learn.microsoft.com/en-us/windows/msix/package/create-app-package-with-makeappx-tool), [패키징 전 점검](https://learn.microsoft.com/en-us/windows/msix/desktop/desktop-to-uwp-prepare), [파일 연결 등 Windows 통합](https://learn.microsoft.com/en-us/windows/apps/desktop/modernize/desktop-to-uwp-extensions).
 
 ## 개발 단계에서 확인할 것
@@ -64,6 +65,30 @@ Windows SDK의 `MakeAppx.exe`로 패키지를 만드는 스크립트를 M0에서
 **M0**에서는 빈 창 수준의 작은 앱으로 패키징 경로를 확인합니다. 개발용 서명과 실제 Store 서명을 구분하며, 설치·시작 메뉴 실행·파일 경로 전달·제거까지 확인합니다. 최소 Windows 버전 후보와 패키지 크기 목표를 이때 정하고, 최소 버전의 실제 동작은 M4까지 검증합니다.
 
 **M6**에서는 실제 플레이어로 깨끗한 Windows에서 설치, HEVC 재생, 업데이트, 제거를 검증합니다. Windows App Certification Kit 검사와 Store 제출 자료를 준비합니다. Store 제출과 승인 여부는 별도 상태로 기록하고, 개발용 설치 성공만으로 공개 배포 완료라고 하지 않습니다.
+
+## Partner Center와 Store 등록 절차
+
+계정 만들기와 본인 확인은 게시자 본인만 할 수 있습니다. 순서와 나눈 역할입니다.
+
+**사용자가 할 일**
+
+1. https://partner.microsoft.com/dashboard/registration 에서 Microsoft 계정으로 앱 개발자 계정을 만듭니다. 개인 계정은 본인 확인(신분증, 얼굴 확인)을 거칩니다. 회사 계정은 회사 확인이 따로 있고 시간이 더 걸립니다. 계정 종류와 수수료는 등록 시점의 화면을 확인합니다.
+2. 대시보드의 "앱 및 게임" → "새 제품" → "MSIX 또는 PWA 앱"에서 앱 이름(예: GongPlayer)을 예약합니다. 이름이 이미 쓰이고 있으면 다른 이름을 정합니다.
+3. 예약한 앱의 "제품 관리" → "제품 ID"에서 아래 세 값을 복사해 알려 줍니다.
+   - `Package/Identity/Name` (예: `12345Publisher.GongPlayer`)
+   - `Package/Identity/Publisher` (예: `CN=XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX`)
+   - `Package/Properties/PublisherDisplayName`
+4. 저장소를 원격에 올려(push) 개인정보처리방침 URL을 열 수 있게 합니다. 저장소가 공개이므로 `https://github.com/quirinal36/GongPlayer/blob/main/PRIVACY.md`를 씁니다. (현재 작업은 `feat/player-m0-m6` 브랜치에 있고, main에 합친 뒤에 이 주소가 열립니다.)
+
+**값을 받은 뒤 할 일 (Claude)**
+
+1. Store용 패키지를 만듭니다: `pwsh scripts/package-msix.ps1 -Static -Name <Identity Name> -Publisher "<Identity Publisher>" -PublisherDisplay "<표시 이름>"`. Store가 서명하므로 이 패키지는 서명하지 않습니다.
+2. Windows App Certification Kit로 패키지를 검사하고 결과를 기록합니다.
+3. Store 설명, 기능 목록, 검색어, 스크린샷(합성 영상으로 찍어 저작권 문제가 없게), 심사 메모(`runFullTrust`를 쓰는 이유: Win32 데스크톱 앱이며 관리자 권한은 요청하지 않음)를 준비합니다.
+
+**함께 정할 것**: 가격(무료/유료), 배포 지역(코덱 특허 검토와 함께), 연령 등급 설문 답변, 지원 연락처.
+
+개인정보처리방침 원문은 저장소 맨 위의 `PRIVACY.md`입니다. 앱이 네트워크를 쓰지 않고 아무것도 저장하지 않는다는 현재 동작을 그대로 적었습니다. 동작이 바뀌면 방침을 먼저 고칩니다.
 
 ## 공개 배포 전에 정할 것
 

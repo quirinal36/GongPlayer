@@ -66,6 +66,14 @@ fn copy_ffmpeg_dlls() {
         // 정적 FFmpeg는 av_get_random_seed 때문에 bcrypt가 필요합니다.
         // sys crate는 FFMPEG_DIR 경로에서 이 시스템 라이브러리를 넣지 않습니다.
         println!("cargo:rustc-link-lib=bcrypt");
+        // AV1 소프트웨어 디코더. build-ffmpeg-static.ps1이 FFmpeg 라이브러리 옆에 둡니다.
+        if let Some(dir) = env::var_os("FFMPEG_DIR") {
+            let lib = PathBuf::from(dir).join("lib");
+            if lib.join("dav1d.lib").exists() {
+                println!("cargo:rustc-link-search=native={}", lib.display());
+                println!("cargo:rustc-link-lib=static=dav1d");
+            }
+        }
         return;
     }
     println!("cargo:rerun-if-env-changed=FFMPEG_DIR");

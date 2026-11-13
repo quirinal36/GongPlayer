@@ -11,14 +11,16 @@ param(
     [string]$PublisherDisplay = 'GongPlayer',
     [switch]$NoBuild,
     # 최소 구성 정적 FFmpeg로 빌드합니다 (scripts/build-ffmpeg-static.ps1 먼저). 실행 파일 하나만 싣습니다.
-    [switch]$Static
+    [switch]$Static,
+    # 패키지 버전의 네 번째 자리. Store 제출용은 0이어야 합니다. 개발용 설치는 매번 올려 덮어쓰기(업데이트)를 합니다.
+    [int]$Revision = 0
 )
 $ErrorActionPreference = 'Stop'
 $root = Split-Path -Parent $PSScriptRoot
 Set-Location $root
 
 $version = (Select-String -Path Cargo.toml -Pattern '^version\s*=\s*"([0-9.]+)"').Matches[0].Groups[1].Value
-$msixVersion = "$version.0"
+$msixVersion = "$version.$Revision"
 $targetDir = if ($Static) { Join-Path $root 'target\static' } else { Join-Path $root 'target' }
 if (-not $NoBuild) {
     if ($Static) {
@@ -54,6 +56,9 @@ if ($Static) {
     # 최소 구성은 외부 라이브러리 없이 FFmpeg만 들어 있으므로 LGPL 2.1 원문을 싣습니다.
     $lic = Get-ChildItem .deps\src -Recurse -Filter 'COPYING.LGPLv2.1' -ErrorAction SilentlyContinue | Select-Object -First 1
     if ($lic) { Copy-Item $lic.FullName (Join-Path $layout 'FFMPEG_LICENSE.txt') }
+    # dav1d(BSD-2-Clause)는 원문을 함께 실어야 합니다.
+    $dlic = Join-Path $root '.deps\src\dav1d\COPYING'
+    if (Test-Path $dlic) { Copy-Item $dlic (Join-Path $layout 'DAV1D_LICENSE.txt') } else { throw "dav1d 라이선스 원문이 없습니다: $dlic" }
 } elseif (Test-Path .deps\ffmpeg\LICENSE.txt) {
     Copy-Item .deps\ffmpeg\LICENSE.txt (Join-Path $layout 'FFMPEG_LICENSE.txt')
 }

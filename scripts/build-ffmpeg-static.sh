@@ -43,6 +43,11 @@ echo "$SRC_SHA  $TARBALL" | sha256sum -c --status || { echo "sha256 불일치: $
 rm -rf "$SRC_DIR"
 tar -xf "$TARBALL" -C "$DEPS/src"
 
+# dav1d: build-ffmpeg-static.ps1이 먼저 빌드해 DAV1D_PREFIX로 알려 줍니다.
+[ -n "${DAV1D_PREFIX:-}" ] || { echo "DAV1D_PREFIX가 없습니다. build-ffmpeg-static.ps1로 실행하세요." >&2; exit 1; }
+DAV1D_PREFIX="$(cygpath -u "$DAV1D_PREFIX")"
+export PKG_CONFIG_PATH="$DAV1D_PREFIX/lib/pkgconfig"
+
 # 빌드 (소스 밖 빌드 디렉터리)
 rm -rf "$BUILD_DIR" "$PREFIX"
 mkdir -p "$BUILD_DIR"
@@ -68,6 +73,8 @@ cd "$BUILD_DIR"
     --enable-decoder=h264,hevc,vp9,av1,aac,mp3,ac3,eac3,opus,vorbis,flac,pcm_s16le,pcm_s24le,pcm_f32le \
     --enable-parser=h264,hevc,vp9,av1,aac,ac3,mpegaudio,opus,vorbis,flac \
     --enable-d3d11va \
+    --enable-libdav1d --enable-decoder=libdav1d \
+    --pkg-config-flags=--static \
     --enable-hwaccel=h264_d3d11va,hevc_d3d11va,vp9_d3d11va,av1_d3d11va \
     --enable-hwaccel=h264_d3d11va2,hevc_d3d11va2,vp9_d3d11va2,av1_d3d11va2 \
     --enable-filter=atempo,aresample,aformat,abuffer,abuffersink,anull
@@ -85,6 +92,8 @@ done
 for l in avutil avcodec avformat avfilter swresample; do
     [ -f "$l.lib" ] || { echo "$l.lib가 없습니다" >&2; exit 1; }
 done
+# Rust 쪽(build.rs)이 링크할 수 있게 dav1d.lib를 FFmpeg 라이브러리 옆에 둡니다.
+cp -f "$DAV1D_PREFIX/lib/dav1d.lib" "$PREFIX/lib/dav1d.lib"
 echo "$SRC_SHA" > "$PREFIX/.sha256"
 echo "FFmpeg static ready: $PREFIX"
 ls -l "$PREFIX/lib"

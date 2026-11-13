@@ -6,9 +6,39 @@ GongPlayer에 포함되거나 링크되는 제3자 소프트웨어와 그 라이
 
 GongPlayer는 FFmpeg(https://ffmpeg.org)를 사용합니다. FFmpeg는 GNU Lesser General Public License 2.1 이상으로 배포되며, GPL·nonfree 구성 요소 없이 빌드한 것을 씁니다. 라이선스 원문은 패키지의 `FFMPEG_LICENSE.txt`에 있습니다.
 
-- 배포용 패키지: FFmpeg 9.0.2을 최소 구성으로 직접 빌드해 실행 파일에 정적으로 링크합니다. 소스: https://ffmpeg.org/releases/ffmpeg-9.0.2.tar.xz (sha256 8c3850283eb25fa026482078a04051e0be17347b09ef81a0849bec15a96e002e). 빌드 방법과 구성 옵션은 저장소의 `scripts/build-ffmpeg-static.sh`에 있습니다. 외부 라이브러리는 넣지 않습니다.
+- 배포용 패키지: FFmpeg 9.0.2을 최소 구성으로 직접 빌드해 실행 파일에 정적으로 링크합니다. 소스: https://ffmpeg.org/releases/ffmpeg-9.0.2.tar.xz (sha256 8c3850283eb25fa026482078a04051e0be17347b09ef81a0849bec15a96e002e). 빌드 방법과 구성 옵션은 저장소의 `scripts/build-ffmpeg-static.sh`에 있습니다. 외부 라이브러리는 아래의 dav1d 하나만 넣습니다.
 - 개발용 패키지: https://github.com/BtbN/FFmpeg-Builds/releases/download/autobuild-2026-11-12-15-40/ffmpeg-n9.0.2-57-gd838f9f9ae-win64-lgpl-shared-9.0.zip (BtbN 빌드, 공유 라이브러리). 이 빌드에 함께 든 외부 라이브러리의 라이선스는 그 패키지의 `FFMPEG_LICENSE.txt`에 있습니다.
 - 대응하는 소스 코드와 다시 빌드·링크하는 방법은 docs/BUILD.md의 "FFmpeg"와 "라이선스" 절을 따릅니다.
+
+## dav1d
+
+AV1 소프트웨어 디코딩에 dav1d(https://code.videolan.org/videolan/dav1d)를 씁니다. 배포용 패키지는 https://downloads.videolan.org/pub/videolan/dav1d/1.5.4/dav1d-1.5.4.tar.xz (sha256 686616b7c69eb88d44459391ab25cac13b6647a3b288835c5784e71c1514a5c5)를 정적으로 빌드해 넣습니다. 라이선스는 BSD 2-Clause이며 원문은 아래와 패키지의 `DAV1D_LICENSE.txt`에 있습니다.
+
+```text
+Copyright © 2018-2025, VideoLAN and dav1d authors
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+1. Redistributions of source code must retain the above copyright notice, this
+   list of conditions and the following disclaimer.
+
+2. Redistributions in binary form must reproduce the above copyright notice,
+   this list of conditions and the following disclaimer in the documentation
+   and/or other materials provided with the distribution.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR
+ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+```
 
 ## Rust crate
 

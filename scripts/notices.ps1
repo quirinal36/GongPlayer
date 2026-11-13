@@ -25,9 +25,20 @@ $lock = @{}
 Get-Content scripts/deps.lock | Where-Object { $_ -match '^[A-Z_0-9]+=' } | ForEach-Object { $k, $v = $_ -split '=', 2; $lock[$k] = $v.Trim() }
 [void]$sb.AppendLine('GongPlayer는 FFmpeg(https://ffmpeg.org)를 사용합니다. FFmpeg는 GNU Lesser General Public License 2.1 이상으로 배포되며, GPL·nonfree 구성 요소 없이 빌드한 것을 씁니다. 라이선스 원문은 패키지의 `FFMPEG_LICENSE.txt`에 있습니다.')
 [void]$sb.AppendLine()
-[void]$sb.AppendLine("- 배포용 패키지: FFmpeg $($lock.FFMPEG_SRC_URL -replace '.*ffmpeg-([0-9.]+)\.tar\.xz','$1')을 최소 구성으로 직접 빌드해 실행 파일에 정적으로 링크합니다. 소스: $($lock.FFMPEG_SRC_URL) (sha256 $($lock.FFMPEG_SRC_SHA256)). 빌드 방법과 구성 옵션은 저장소의 ``scripts/build-ffmpeg-static.sh``에 있습니다. 외부 라이브러리는 넣지 않습니다.")
+[void]$sb.AppendLine("- 배포용 패키지: FFmpeg $($lock.FFMPEG_SRC_URL -replace '.*ffmpeg-([0-9.]+)\.tar\.xz','$1')을 최소 구성으로 직접 빌드해 실행 파일에 정적으로 링크합니다. 소스: $($lock.FFMPEG_SRC_URL) (sha256 $($lock.FFMPEG_SRC_SHA256)). 빌드 방법과 구성 옵션은 저장소의 ``scripts/build-ffmpeg-static.sh``에 있습니다. 외부 라이브러리는 아래의 dav1d 하나만 넣습니다.")
 [void]$sb.AppendLine("- 개발용 패키지: $($lock.FFMPEG_URL) (BtbN 빌드, 공유 라이브러리). 이 빌드에 함께 든 외부 라이브러리의 라이선스는 그 패키지의 ``FFMPEG_LICENSE.txt``에 있습니다.")
 [void]$sb.AppendLine('- 대응하는 소스 코드와 다시 빌드·링크하는 방법은 docs/BUILD.md의 "FFmpeg"와 "라이선스" 절을 따릅니다.')
+[void]$sb.AppendLine()
+[void]$sb.AppendLine('## dav1d')
+[void]$sb.AppendLine()
+[void]$sb.AppendLine("AV1 소프트웨어 디코딩에 dav1d(https://code.videolan.org/videolan/dav1d)를 씁니다. 배포용 패키지는 $($lock.DAV1D_SRC_URL) (sha256 $($lock.DAV1D_SRC_SHA256))를 정적으로 빌드해 넣습니다. 라이선스는 BSD 2-Clause이며 원문은 아래와 패키지의 ``DAV1D_LICENSE.txt``에 있습니다.")
+$dcopy = Join-Path $root '.deps\src\dav1d\COPYING'
+if (Test-Path $dcopy) {
+    [void]$sb.AppendLine()
+    [void]$sb.AppendLine('```text')
+    [void]$sb.AppendLine((Get-Content $dcopy -Raw).Trim())
+    [void]$sb.AppendLine('```')
+}
 [void]$sb.AppendLine()
 [void]$sb.AppendLine('## Rust crate')
 [void]$sb.AppendLine()

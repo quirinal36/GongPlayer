@@ -35,7 +35,9 @@ if (-not $trusted) {
 }
 
 # 이름 있는 인자는 해시테이블로 넘깁니다. 배열로 넘기면 위치 인자로 묶여 게시자 값이 어긋납니다.
-$pkgArgs = @{ Name = $name; Publisher = $subject; NoBuild = [bool]$NoBuild; Static = -not $Dev }
+# 같은 버전은 내용을 바꿔 다시 설치할 수 없으므로, 네 번째 자리를 분 단위 시각으로 매번 올립니다.
+$revision = [int](((Get-Date) - [datetime]'2026-01-01').TotalMinutes % 65000) + 1
+$pkgArgs = @{ Name = $name; Publisher = $subject; NoBuild = [bool]$NoBuild; Static = -not $Dev; Revision = $revision }
 & (Join-Path $PSScriptRoot 'package-msix.ps1') @pkgArgs
 if ($LASTEXITCODE -ne 0 -and $LASTEXITCODE -ne $null) { throw "패키지 생성 실패" }
 $version = (Select-String -Path Cargo.toml -Pattern '^version\s*=\s*"([0-9.]+)"').Matches[0].Groups[1].Value

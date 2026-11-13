@@ -109,12 +109,13 @@ configure --toolchain=msvc --arch=x86_64 --target-os=win64 --extra-cflags=-MT \
   --enable-decoder=h264,hevc,vp9,av1,aac,mp3,ac3,eac3,opus,vorbis,flac,pcm_s16le,pcm_s24le,pcm_f32le \
   --enable-parser=h264,hevc,vp9,av1,aac,ac3,mpegaudio,opus,vorbis,flac \
   --enable-d3d11va \
+  --enable-libdav1d --enable-decoder=libdav1d --pkg-config-flags=--static \
   --enable-hwaccel=h264_d3d11va,hevc_d3d11va,vp9_d3d11va,av1_d3d11va \
   --enable-hwaccel=h264_d3d11va2,hevc_d3d11va2,vp9_d3d11va2,av1_d3d11va2 \
   --enable-filter=atempo,aresample,aformat,abuffer,abuffersink,anull
 ```
 
-정적 라이브러리 크기는 avcodec 11.2MB, avutil 2.4MB, avformat 2.2MB, avfilter 0.5MB, swresample 0.4MB이고, LTO로 링크한 실행 파일은 6.35MB입니다.
+정적 라이브러리 크기는 avcodec 11.2MB, avutil 2.4MB, avformat 2.2MB, avfilter 0.5MB, swresample 0.4MB이고, dav1d 3.8MB를 더해 LTO로 링크한 실행 파일은 8.13MB입니다 (dav1d 없이 6.35MB).
 
 알아 둘 점입니다.
 
@@ -122,7 +123,7 @@ configure --toolchain=msvc --arch=x86_64 --target-os=win64 --extra-cflags=-MT \
 - FFmpeg 9.0.2에서 `*_d3d11va2`만 켜면 링크 오류(`LNK2001 ff_h264_d3d11va2_hwaccel`)가 납니다. 구현 파일이 `*_d3d11va`를 켤 때만 컴파일되므로 두 이름을 모두 켭니다.
 - CRT는 `-MT`로 맞춥니다. Rust 쪽이 `+crt-static`이기 때문입니다 (D18).
 - 정적 FFmpeg는 `bcrypt`가 필요합니다. `static-ffmpeg` 기능에서 `build.rs`가 링크합니다.
-- FFmpeg 자체의 `av1` 디코더는 하드웨어 가속 전용입니다. AV1을 소프트웨어로 디코딩하려면 `dav1d`를 추가로 넣어야 하고 그만큼 커집니다. 플레이어는 GPU의 AV1 디코더 프로파일을 먼저 확인하고, 없으면 `libdav1d`로 엽니다. 개발용 BtbN 빌드에는 libdav1d가 있어 기준 PC(RTX 2060, AV1 하드웨어 없음)에서도 재생되지만, 현재 배포용 최소 구성에는 없어 한 줄 오류로 알립니다 (미결 항목).
+- FFmpeg 자체의 `av1` 디코더는 하드웨어 가속 전용입니다. 플레이어는 GPU의 AV1 디코더 프로파일을 먼저 확인하고, 없으면 `libdav1d`로 엽니다. 배포용 빌드는 dav1d 1.5.4를 meson과 MSVC로 정적 빌드해 넣습니다 (D25). `build-ffmpeg-static.ps1`이 meson·ninja를 `.deps/pytools` 가상 환경에 설치하고 MSYS2의 nasm을 씁니다. 기준 PC(RTX 2060, AV1 하드웨어 없음)에서 4K 10bit AV1을 소프트웨어로 30fps 재생했습니다.
 - `--enable-gpl`과 `--enable-nonfree`는 쓰지 않습니다. 디코딩에는 필요 없고, 쓰면 라이선스가 바뀝니다.
 - 소프트웨어 폴백의 색 형식 변환은 직접 하므로 `swscale`이 필요 없습니다 (D19).
 - 필터 그래프에는 `abuffer`, `abuffersink`, `atempo`, `aresample`, `aformat`이 필요합니다.
@@ -214,7 +215,7 @@ CI 러너에는 GPU가 없어 하드웨어 디코딩과 화면 출력은 자동�
 | 대상 | 라이선스 | 지켜야 할 것 |
 |---|---|---|
 | FFmpeg (GPL 옵션 없이 빌드) | LGPL 2.1 이상 | 고지문 포함. 정적 링크라면 사용자가 FFmpeg를 바꿔 다시 링크할 수 있어야 함 |
-| dav1d (넣는다면) | BSD 2-Clause | 고지문 포함 |
+| dav1d 1.5.4 | BSD 2-Clause | 고지문과 원문 포함 (`DAV1D_LICENSE.txt`) |
 | `windows`, `cpal` 등 crate | MIT 또는 Apache-2.0 | 고지문 포함 (`THIRD_PARTY_NOTICES.md`) |
 | `ffmpeg-sys-the-third` | WTFPL | 고지문 포함 |
 | Concat | AGPL 3.0 이상 | 코드를 복사하지 않음. 참고만 |

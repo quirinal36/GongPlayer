@@ -6,3 +6,10 @@ FFMPEG_SHA256=85997c85effa2ebea19eac63c76adedb9d381b0c3d22a09cd69b32f9f66c4d30
 # 배포용 최소 구성 정적 빌드의 FFmpeg 소스 (scripts/build-ffmpeg-static.ps1)
 FFMPEG_SRC_URL=https://ffmpeg.org/releases/ffmpeg-9.0.2.tar.xz
 FFMPEG_SRC_SHA256=8c3850283eb25fa026482078a04051e0be17347b09ef81a0849bec15a96e002e
+
+# AV1 소프트웨어 디코더 dav1d (BSD-2-Clause). build-ffmpeg-static.ps1이 정적으로 빌드해 FFmpeg에 넣습니다.
+DAV1D_SRC_URL=https://downloads.videolan.org/pub/videolan/dav1d/1.5.4/dav1d-1.5.4.tar.xz
+DAV1D_SRC_SHA256=686616b7c69eb88d44459391ab25cac13b6647a3b288835c5784e71c1514a5c5
+# dav1d 빌드 도구 (.deps/pytools 가상 환경에 설치)
+MESON_VERSION=1.6.1
+NINJA_VERSION=1.11.1.3
