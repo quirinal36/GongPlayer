@@ -1,6 +1,6 @@
 # 릴리스 빌드를 MSIX로 묶습니다.
 #   pwsh scripts/package-msix.ps1                 # 개발용(서명 없음, 테스트 Identity)
-#   pwsh scripts/package-msix.ps1 -Name ... -Publisher "CN=..." -PublisherDisplay "..."   # Store용 값
+#   pwsh scripts/package-msix.ps1 -Store            # Store 제출용 (Partner Center의 Identity, 정적 빌드, 서명 없음, 버전 x.y.z.0)
 # 결과: dist/GongPlayer_<버전>_x64.msix, 압축 크기와 설치(풀린) 크기를 출력합니다.
 # 개발용 설치는 scripts/dev-install.ps1 (자체 서명 인증서로 서명 후 설치, 관리자 승인 필요).
 # 서명 없는 패키지는 실행 파일을 활성화할 수 없어 설치되지 않습니다 (0x80073D2B).
@@ -13,11 +13,20 @@ param(
     # 최소 구성 정적 FFmpeg로 빌드합니다 (scripts/build-ffmpeg-static.ps1 먼저). 실행 파일 하나만 싣습니다.
     [switch]$Static,
     # 패키지 버전의 네 번째 자리. Store 제출용은 0이어야 합니다. 개발용 설치는 매번 올려 덮어쓰기(업데이트)를 합니다.
-    [int]$Revision = 0
+    [int]$Revision = 0,
+    # Microsoft Store 제출용. 파트너 센터 "제품 ID" 화면의 값입니다 (Store ID 9PGQL0Q90CGF).
+    [switch]$Store
 )
 $ErrorActionPreference = 'Stop'
 $root = Split-Path -Parent $PSScriptRoot
 Set-Location $root
+if ($Store) {
+    $Name = 'letscoding.GongPlayer'
+    $Publisher = 'CN=B3FB09CC-66A1-4A25-AE74-EBFF02F06617'
+    $PublisherDisplay = 'letscoding'
+    $Static = $true
+    $Revision = 0   # Store는 버전의 네 번째 자리가 0이어야 합니다
+}
 
 $version = (Select-String -Path Cargo.toml -Pattern '^version\s*=\s*"([0-9.]+)"').Matches[0].Groups[1].Value
 $msixVersion = "$version.$Revision"

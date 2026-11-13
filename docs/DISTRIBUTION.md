@@ -66,6 +66,15 @@ Windows SDK의 `MakeAppx.exe`로 패키지를 만드는 스크립트를 M0에서
 
 **M6**에서는 실제 플레이어로 깨끗한 Windows에서 설치, HEVC 재생, 업데이트, 제거를 검증합니다. Windows App Certification Kit 검사와 Store 제출 자료를 준비합니다. Store 제출과 승인 여부는 별도 상태로 기록하고, 개발용 설치 성공만으로 공개 배포 완료라고 하지 않습니다.
 
+## Partner Center 진행 상황
+
+- 2026-11-13: 회사 계정(letscoding)으로 개발자 등록을 마쳤습니다 (사업자등록증 제출, 수동 검토).
+- 앱 이름 **GongPlayer**를 예약했습니다. 예약 후 3개월 안에 제출하지 않으면 예약이 풀립니다.
+- Store ID `9PGQL0Q90CGF`, 링크 https://apps.microsoft.com/detail/9PGQL0Q90CGF (승인 전에는 열리지 않음)
+- 패키지 Identity: Name `letscoding.GongPlayer`, Publisher `CN=B3FB09CC-66A1-4A25-AE74-EBFF02F06617`, PublisherDisplayName `letscoding`, PFN `letscoding.GongPlayer_ykcjhq69qknkg`. `scripts/package-msix.ps1 -Store`에 들어 있습니다.
+- Store 제출용 패키지: `pwsh scripts/package-msix.ps1 -Store` → `dist/GongPlayer_<버전>_x64.msix` (정적 빌드, 서명 없음, 버전 네 번째 자리 0). 0.1.0은 압축 3.43MB입니다.
+- 인증 키트 검사: `pwsh scripts/run-wack.ps1` (관리자 권한 필요). 아직 실행하지 않았습니다.
+
 ## Partner Center와 Store 등록 절차
 
 계정 만들기와 본인 확인은 게시자 본인만 할 수 있습니다. 순서와 나눈 역할입니다.
