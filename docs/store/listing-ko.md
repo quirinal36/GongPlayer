@@ -44,8 +44,12 @@ GongPlayer는 Mozilla Public License 2.0으로 공개된 오픈소스입니다. 
 
 ## 새로운 기능 (이번 버전)
 
+첫 제출에서는 비워 둡니다 (파트너 센터 안내). 다음 버전부터 바뀐 점을 적습니다.
+
+## 간단한 설명 (270자 이하)
+
 ```text
-첫 버전입니다.
+코덱을 따로 설치하지 않아도 HEVC(H.265)를 포함한 동영상을 바로 재생하는 가벼운 플레이어입니다. 그래픽카드 하드웨어 디코딩, 음정을 유지하는 0.5~4배속, 키보드로 하는 빠른 탐색을 지원하며, 인터넷 연결과 데이터 수집이 없습니다.
 ```
 
 ## 제품 기능 (항목별 입력, 최대 20개)
@@ -100,7 +104,14 @@ MKV
 
 ## 로고
 
-Store 목록의 앱 타일은 패키지의 로고(`packaging/Assets`)를 씁니다. 파트너 센터가 따로 요구하면 `packaging/source/icon-ball.png`(1024px, 투명 배경)를 올립니다.
+`pwsh scripts/make-store-art.ps1`로 만든 그림을 "Microsoft Store 로고"에 올립니다. 공은 앱 아이콘 원본(`packaging/source/icon-ball.png`)을 그대로 씁니다.
+
+| 칸 | 파일 | 크기 |
+|---|---|---|
+| 9:16 포스터 아트 | `docs/store/art/poster-9x16.png` (공 아래에 제품 이름) | 1440x2160 |
+| 1:1 박스 아트 | `docs/store/art/box-1x1.png` (공만) | 2160x2160 |
+
+앱 타일 아이콘(300x300 등)은 비워 두어 패키지의 로고(`packaging/Assets`)를 씁니다.
 
 ## 속성
 
@@ -108,7 +119,7 @@ Store 목록의 앱 타일은 패키지의 로고(`packaging/Assets`)를 씁니�
 |---|---|
 | 카테고리 | 사진 및 비디오 |
 | 하위 카테고리 | 없음 |
-| 개인정보처리방침 URL | https://github.com/quirinal36/GongPlayer/blob/main/PRIVACY.md |
+| 개인정보처리방침 URL | https://github.com/quirinal36/GongPlayer/blob/main/PRIVACY.md (`runFullTrust` 때문에 "개인 정보에 액세스"가 "예"로 고정되어 필수) |
 | 웹 사이트 | https://github.com/quirinal36/GongPlayer |
 | 지원 연락처 | contact@letscoding.kr, 063-714-2536 |
 | 시스템 요구 사항 (최소) | Windows 10 버전 2004 이상, x64, DirectX 11 지원 그래픽카드 |

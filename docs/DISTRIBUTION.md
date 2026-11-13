@@ -74,6 +74,14 @@ Windows SDK의 `MakeAppx.exe`로 패키지를 만드는 스크립트를 M0에서
 - 패키지 Identity: Name `letscoding.GongPlayer`, Publisher `CN=B3FB09CC-66A1-4A25-AE74-EBFF02F06617`, PublisherDisplayName `letscoding`, PFN `letscoding.GongPlayer_ykcjhq69qknkg`. `scripts/package-msix.ps1 -Store`에 들어 있습니다.
 - Store 제출용 패키지: `pwsh scripts/package-msix.ps1 -Store` → `dist/GongPlayer_<버전>_x64.msix` (정적 빌드, 서명 없음, 버전 네 번째 자리 0). 0.1.0은 압축 3.43MB입니다.
 - 인증 키트 검사: `pwsh scripts/run-wack.ps1` (관리자 권한 필요). 2026-11-14 0.1.0.0 Store 패키지로 실행해 **전체 PASS (24개 항목 모두 통과, 경고 없음)**, Windows 11 Pro.
+- 2026-11-14: 첫 제출(Submission 1)의 모든 항목을 채웠습니다. 계정 확인 경고도 사라졌습니다. 항목별로 실제 입력한 값과 파트너 센터에서 알게 된 점은 아래와 같습니다.
+  - 가격 책정 및 가용성: 대한민국만, 앞으로 생길 시장은 자동 추가하지 않음, 무료, Store에 공개되고 검색 가능.
+  - 속성: 사진 및 비디오. 패키지에 `runFullTrust`가 있으면 "개인 정보에 액세스하는가"가 "예"로 고정되므로 개인정보처리방침 URL이 필수입니다. 지원 정보는 웹 사이트, 이메일, 전화, 주소를 입력했습니다.
+  - 연령별 등급: IARC 설문에서 기타 앱으로 답했고 모든 질문에 "아니요"를 골라 3+ 등급을 받았습니다.
+  - 패키지: Validated. 앞으로 생길 장치 패밀리는 Microsoft가 정하도록 기본값을 그대로 두었습니다.
+  - Store 목록(한국어): `docs/store/listing-ko.md`의 내용을 넣었고, 첫 제출이라 "이 버전의 새로운 기능"은 비워 두었습니다. 스크린샷 4장에 캡션을 붙였고, 로고는 `scripts/make-store-art.ps1`로 만든 9:16 포스터 아트와 1:1 박스 아트를 올렸습니다.
+  - 제출 옵션: 제한된 기능(`runFullTrust`)의 사유를 묻는 칸은 500자로 제한됩니다. 심사 메모를 줄여 넣었습니다(`docs/store/certification-notes.md`의 첫 블록). 게시 시점은 게시자가 정합니다.
+  - 추가적인 테스트 정보: 심사자에게만 보이는 "인증에 대한 참고 사항"은 제출 옵션이 아닌 이 페이지에 있습니다(6000자 제한). 심사 메모 전문을 넣었습니다.
 
 ## Partner Center와 Store 등록 절차
 

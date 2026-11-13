@@ -1,6 +1,18 @@
 # 심사 메모 (Notes for certification)
 
-파트너 센터 → 제출 → "인증 참고 사항(Notes for certification)"에 붙여 넣습니다. 심사자가 영어로 읽을 가능성이 커서 영어로 씁니다. `runFullTrust`를 쓰는 이유와 시험 방법을 적습니다.
+심사자가 영어로 읽을 가능성이 커서 영어로 씁니다. 파트너 센터에서 두 곳에 넣습니다.
+
+## 제출 옵션 → 제한된 기능 (500자 제한)
+
+"runFullTrust 기능이 필요한 이유"를 묻는 필수 칸입니다.
+
+```text
+GongPlayer is a classic Win32 desktop video player (Rust, FFmpeg, Direct3D 11) packaged as MSIX. It uses D3D11 hardware video decoding, WASAPI audio and a Win32 window, so it runs as a full trust desktop process. It runs asInvoker (no elevation), installs no drivers or services, and does not write to its install folder. It makes no network connections and collects no data. It only opens local video files the user chooses.
+```
+
+## 추가적인 테스트 정보 → 인증에 대한 참고 사항 (6000자 제한)
+
+제품 페이지 왼쪽 아래 "추가 정보 → 추가적인 테스트 정보"에 있습니다. 고객에게는 보이지 않습니다.
 
 ```text
 GongPlayer is a lightweight local video player (Win32 desktop app, Rust + FFmpeg + Direct3D 11) packaged as MSIX.
