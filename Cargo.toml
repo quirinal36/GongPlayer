@@ -1,0 +1,45 @@
+[package]
+name = "gongplayer"
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.93"
+publish = false
+description = "Windows용 초경량 동영상 플레이어"
+
+[dependencies]
+# windows가 이미 쓰는 crate. Direct2D 좌표 타입(Vector2)이 여기에만 있습니다.
+windows-numerics = "0.3"
+ffmpeg-sys-the-third = { version = "=6.0.0", default-features = false, features = ["avcodec", "avformat", "avfilter", "swresample"] }
+cpal = { version = "0.18", default-features = false }
+windows = { version = "0.62", features = [
+    "Win32_Foundation",
+    "Win32_Graphics_Direct2D",
+    "Win32_Graphics_Direct2D_Common",
+    "Win32_Graphics_Direct3D",
+    "Win32_Graphics_Direct3D11",
+    "Win32_Graphics_DirectWrite",
+    "Win32_Graphics_Dxgi",
+    "Win32_Graphics_Dxgi_Common",
+    "Win32_Graphics_Gdi",
+    "Win32_System_Com",
+    "Win32_System_LibraryLoader",
+    "Win32_System_Power",
+    "Win32_System_Threading",
+    "Win32_UI_HiDpi",
+    "Win32_UI_Input_KeyboardAndMouse",
+    "Win32_UI_Shell",
+    "Win32_UI_Shell_Common",
+    "Win32_UI_WindowsAndMessaging",
+] }
+
+[features]
+# 배포용: 최소 구성 FFmpeg 정적 라이브러리를 실행 파일에 넣습니다.
+# FFMPEG_DIR을 scripts/build-ffmpeg-static.ps1의 결과(.deps/ffmpeg-static)로 가리켜 빌드합니다.
+static-ffmpeg = ["ffmpeg-sys-the-third/static"]
+
+[profile.release]
+opt-level = "s"
+lto = true
+codegen-units = 1
+panic = "abort"
+strip = true

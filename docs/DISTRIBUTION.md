@@ -1,0 +1,77 @@
+# Windows 설치와 공개 배포
+
+2026-11-13 사용자 요구를 반영한 배포 계획입니다. 개발용 MSIX 생성까지 했고, 개발용 서명·설치와 Store 등록은 아직 하지 않았습니다 (아래 "패키지 설계"의 진행 상황).
+
+## 목표와 기본 경로
+
+현재 Windows PC에서 개발하는 플레이어를 다른 사람도 쉽게 설치하게 합니다. 기본 경로는 **Rust·Win32 앱 → MSIX 패키지 → Microsoft Store**입니다.
+
+Win32 앱도 MSIX로 Store에 배포할 수 있으므로 기존 재생기 설계를 유지합니다. Store는 패키지 호스팅과 업데이트를 제공하며, 실제 심사 결과는 제출 후 확인합니다. 근거: [Microsoft의 Win32 배포 방식 비교](https://learn.microsoft.com/en-us/windows/apps/distribute-through-store/how-to-distribute-your-win32-app-through-microsoft-store).
+
+## 사용자가 보게 될 설치 흐름
+
+1. GongPlayer의 Microsoft Store 페이지를 엽니다.
+2. 설치 버튼으로 앱을 설치합니다.
+3. 시작 메뉴에서 실행하거나, 영상 파일의 "연결 프로그램"에서 선택합니다.
+4. 업데이트는 Store를 통해 받고, 제거는 Windows 설정에서 합니다.
+
+Store 설치는 기존의 "다음 → 다음 → 완료" 마법사와 다른 표준 설치 흐름입니다. 별도 다운로드 파일로 설치하는 마법사까지 필요하면 보조 배포 채널을 추가합니다.
+
+| 경로 | 역할 | 준비 사항 |
+|---|---|---|
+| Microsoft Store의 MSIX | 기본 공개 배포 | 패키지, Store 계정과 등록 자료, 심사 |
+| 홈페이지의 MSI/EXE 설치 마법사 | 필요 시 추가 | 게시자 코드 서명, 호스팅, 업데이트 방식, 설치·제거 검증 |
+| 직접 배포하는 MSIX | 필요 시 추가 | 신뢰할 수 있는 서명과 업데이트 경로. Store에 등록하는 것과 별도 |
+
+## "알 수 없는 게시자"와 SmartScreen
+
+게시자 확인, SmartScreen의 앱 평판, 관리자 권한을 묻는 UAC는 서로 다른 검사입니다.
+
+- **Store의 MSIX**: Microsoft가 심사 후 패키지에 서명합니다. Store 설치 경로에서 SmartScreen 다운로드 경고를 피할 수 있고, 이 경로만을 위해 별도의 상용 서명 인증서를 구매할 필요가 없습니다.
+- **Store의 MSI/EXE 등록**: MSIX와 달리 게시자가 설치 파일과 포함 PE 파일을 서명해야 합니다. Store가 설치 파일을 대신 재서명하지 않습니다.
+- **홈페이지에서 직접 받은 설치 파일**: 유효한 코드 서명은 게시자를 확인하게 해 주지만, 새 파일에 대한 SmartScreen 경고까지 즉시 없애 주지는 않습니다.
+- **관리자 권한**: GongPlayer는 일반 사용자 권한으로 실행하도록 설계합니다. 서명 유무와 관리자 권한 요청은 별개입니다.
+
+근거: [Microsoft 코드 서명 안내](https://learn.microsoft.com/en-us/windows/apps/package-and-deploy/code-signing-options), [SmartScreen 평판 안내](https://learn.microsoft.com/en-us/windows/apps/package-and-deploy/smartscreen-reputation).
+
+일반 사용자에게 개발자 모드, 테스트 인증서 설치, 보안 기능 해제를 요구하지 않습니다. 개발용 패키지 테스트와 실제 Store 설치 검증을 구분하고, 기업의 설치 제한 정책까지 해제된다고 보장하지 않습니다.
+
+## 패키지 설계
+
+- 앱은 관리자 승격 없는 Win32 데스크톱 프로세스로 실행합니다.
+- 실행 파일, 필요한 DLL, 아이콘, 고지문과 `AppxManifest.xml`을 패키지에 포함합니다.
+- Store용 `Identity`의 Name과 Publisher는 Partner Center 값에 맞춥니다. 테스트용 식별자를 Store의 실제 값으로 간주하지 않습니다.
+- 패키지의 버전, x64 아키텍처, 최소 Windows 버전을 명시합니다. `runFullTrust` 등 필요한 선언과 제출 설명을 준비합니다. 이는 관리자 승격을 뜻하지 않습니다.
+- 시작 메뉴 표시와 파일 연결을 매니페스트로 선언하고, 기본 앱 선택은 사용자에게 맡깁니다.
+- 설치 디렉터리에 쓰거나 현재 작업 디렉터리를 고정 경로로 가정하지 않습니다.
+- FFmpeg 및 CRT 의존성을 포함하거나 지원되는 패키지 의존성으로 선언해, 개발 도구 없는 PC에서도 실행되게 합니다.
+
+Windows SDK의 `MakeAppx.exe`로 패키지를 만드는 스크립트를 M0에서 검증합니다.
+
+**2026-11-13 진행 상황 (M0 스파이크 C)**
+
+- `scripts/package-msix.ps1`이 실제 플레이어로 MSIX를 만듭니다. 매니페스트 원본은 `packaging/AppxManifest.xml`이고 Identity·게시자·버전을 스크립트가 채웁니다. `runFullTrust`, 최소 Windows 10.0.19041, x64, 파일 연결(`.mp4 .m4v .mov .mkv .webm .ts .m2ts .mts .avi`, 경로를 `"%1"`로 첫 인자에 전달)을 선언했습니다. 로고는 `scripts/make-assets.ps1`이 도형으로 만듭니다.
+- 개발용(FFmpeg DLL 포함)은 실행 코드 143MB, MSIX 압축 62MB입니다. 배포용 `-Static`(최소 구성 FFmpeg 정적 링크)은 실행 파일 하나 6.35MB, MSIX 압축 2.47MB, 설치 6.44MB입니다.
+- 서명 없는 패키지는 설치되지 않습니다. Windows 11의 서명 없는 패키지 설치(`Add-AppxPackage -AllowUnsigned`, 게시자에 OID `2.25.311729368913984317654407730594956997722=1`)를 시도했지만 "서명되지 않은 패키지에 실행 가능한 활성화를 포함할 수 없다"(0x80073D2B)로 거부됐습니다.
+- 그래서 개발용 설치는 `scripts/dev-install.ps1`로 합니다. 현재 사용자 저장소에 자체 서명 인증서(`CN=GongPlayer Dev`, 개인 키 내보내기 불가)를 만들어 서명하고, 그 공개 인증서를 "로컬 컴퓨터\신뢰할 수 있는 사용자"에 넣습니다. 이 단계에만 처음 한 번 관리자 승인(UAC)이 필요합니다. 기본은 배포용 정적 빌드로 설치하고, `-Dev`면 개발용 DLL 빌드로 설치합니다.
+- **확인함 (2026-11-13, 기준 PC, 정적 빌드 패키지)**: 서명한 패키지가 일반 사용자 권한으로 설치되고(`C:\Program Files\WindowsApps\GongPlayer.Dev_…`), 앱 ID로 실행하면 빈 상태 화면이 뜹니다(시작 메뉴와 같은 경로). 패키지가 등록한 `.mp4` 파일 연결 ProgID로 `TestVideos/a.mp4`를 열면 `"…\GongPlayer.exe" "….mp4"`로 경로가 첫 인자에 전달되어 재생됩니다. 제거하면 패키지와 설치 폴더가 모두 사라지고, 다시 설치됩니다.
+- 처음 시도에서 `dev-install.ps1`이 `package-msix.ps1`에 인자를 배열로 넘겨 게시자 자리에 `GongPlayer.Dev`가 들어가, 매니페스트 검증에서 `makeappx`가 실패했습니다. 해시테이블로 넘기도록 고쳤습니다.
+- 확인 못 함: 탐색기에서 사람이 "연결 프로그램"을 고르는 것 (같은 ProgID 경로), 업데이트(버전을 올린 패키지로 덮어 설치), 개발 도구가 없는 깨끗한 Windows.
+- Store 제출용 패키지는 Store가 서명하므로 이 인증서와 무관합니다. Identity Name과 Publisher는 Partner Center 값으로 `-Name`, `-Publisher`, `-PublisherDisplay`를 넘겨 만듭니다. 참고: [매니페스트와 패키지 구성](https://learn.microsoft.com/en-us/windows/msix/desktop/desktop-to-uwp-manual-conversion), [MakeAppx](https://learn.microsoft.com/en-us/windows/msix/package/create-app-package-with-makeappx-tool), [패키징 전 점검](https://learn.microsoft.com/en-us/windows/msix/desktop/desktop-to-uwp-prepare), [파일 연결 등 Windows 통합](https://learn.microsoft.com/en-us/windows/apps/desktop/modernize/desktop-to-uwp-extensions).
+
+## 개발 단계에서 확인할 것
+
+**M0**에서는 빈 창 수준의 작은 앱으로 패키징 경로를 확인합니다. 개발용 서명과 실제 Store 서명을 구분하며, 설치·시작 메뉴 실행·파일 경로 전달·제거까지 확인합니다. 최소 Windows 버전 후보와 패키지 크기 목표를 이때 정하고, 최소 버전의 실제 동작은 M4까지 검증합니다.
+
+**M6**에서는 실제 플레이어로 깨끗한 Windows에서 설치, HEVC 재생, 업데이트, 제거를 검증합니다. Windows App Certification Kit 검사와 Store 제출 자료를 준비합니다. Store 제출과 승인 여부는 별도 상태로 기록하고, 개발용 설치 성공만으로 공개 배포 완료라고 하지 않습니다.
+
+## 공개 배포 전에 정할 것
+
+- 게시자 계정의 개인/회사 구분, Store 앱 이름과 패키지 식별자
+- 무료/유료 여부, 배포 지역, 지원 연락처와 지원 페이지
+- 실제 앱 동작에 맞는 개인정보처리방침, Store 설명, 아이콘과 스크린샷
+- GongPlayer의 라이선스와 소스 공개 여부
+- 배포하는 FFmpeg의 대응 소스, 고지문, 빌드 방법과 필요한 재링크 자료
+- HEVC 등 포함 코덱의 배포 조건 검토 결과
+
+라이선스의 구체적인 검토 항목은 [BUILD](BUILD.md)에 있습니다. 이 문서에서 상용 인증서 구매나 Store 계정 등록을 완료했다고 가정하지 않습니다.

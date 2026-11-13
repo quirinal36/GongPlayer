@@ -1,0 +1,57 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  windows:
+    runs-on: windows-latest
+    env:
+      LIBCLANG_PATH: C:\Program Files\LLVM\bin
+    steps:
+      - uses: actions/checkout@v4
+
+      # rust-toolchain.toml에 고정한 툴체인을 씁니다.
+      - name: Rust toolchain
+        run: rustup show active-toolchain || rustup toolchain install
+
+      - name: FFmpeg (deps.lock에 고정한 사전 빌드)
+        shell: pwsh
+        run: ./scripts/fetch-ffmpeg.ps1
+
+      - uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: cargo-${{ hashFiles('Cargo.lock', 'rust-toolchain.toml') }}
+
+      - name: fmt
+        run: cargo fmt --check
+
+      - name: clippy
+        run: cargo clippy --all-targets -- -D warnings
+
+      - name: test
+        run: cargo test
+
+      - name: release build
+        run: cargo build --release
+
+      # 실행 코드 합계 크기 기록과 예산 검사 (docs/PHILOSOPHY.md). 지금은 개발용 전체 구성
+      # FFmpeg DLL을 쓰므로 기록만 하고, 최소 구성 빌드로 바꾸면 -Enforce를 켭니다.
+      - name: size report
+        shell: pwsh
+        run: ./scripts/size-report.ps1
+
+      - name: MSIX
+        shell: pwsh
+        run: ./scripts/package-msix.ps1 -NoBuild
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: GongPlayer-msix
+          path: dist/*.msix

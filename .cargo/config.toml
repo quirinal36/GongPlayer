@@ -1,0 +1,10 @@
+# 개발용 FFmpeg 위치. scripts/fetch-ffmpeg.ps1이 받아 둡니다.
+# 이미 환경 변수로 지정했다면 그 값이 우선합니다.
+[env]
+FFMPEG_DIR = { value = ".deps/ffmpeg", relative = true }
+LIBCLANG_PATH = 'C:/Program Files/LLVM/bin'
+
+# VC++ 런타임(vcruntime140.dll)을 실행 파일에 넣습니다. 깨끗한 Windows에도 설치 없이
+# 실행되게 하기 위해서입니다. UCRT(api-ms-win-crt-*)는 Windows 10부터 기본으로 있습니다.
+[target.x86_64-pc-windows-msvc]
+rustflags = ["-C", "target-feature=+crt-static"]

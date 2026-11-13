@@ -1,0 +1,8 @@
+# 개발용 FFmpeg 사전 빌드 (BtbN/FFmpeg-Builds, LGPL, 공유 라이브러리)
+# BtbN은 오래된 autobuild 릴리스를 지우므로, 사라지면 새 빌드로 갱신하고 sha256을 함께 바꿉니다.
+FFMPEG_URL=https://github.com/BtbN/FFmpeg-Builds/releases/download/autobuild-2026-11-12-15-40/ffmpeg-n9.0.2-57-gd838f9f9ae-win64-lgpl-shared-9.0.zip
+FFMPEG_SHA256=85997c85effa2ebea19eac63c76adedb9d381b0c3d22a09cd69b32f9f66c4d30
+
+# 배포용 최소 구성 정적 빌드의 FFmpeg 소스 (scripts/build-ffmpeg-static.ps1)
+FFMPEG_SRC_URL=https://ffmpeg.org/releases/ffmpeg-9.0.2.tar.xz
+FFMPEG_SRC_SHA256=8c3850283eb25fa026482078a04051e0be17347b09ef81a0849bec15a96e002e
