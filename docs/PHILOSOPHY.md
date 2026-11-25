@@ -63,9 +63,9 @@ crate 하나마다 크기, 빌드 시간, 시작 시간, 유지 부담이 붙습
 
 UI 툴킷, 비동기 런타임, 범용 렌더링 엔진은 쓰지 않습니다.
 
-### 10. Windows 전용으로 만든다
+### 10. 각 플랫폼의 출력 기능을 직접 쓴다
 
-크로스 플랫폼 추상화 계층을 두지 않고 Windows API를 직접 부릅니다. 이식성을 포기하는 대신 크기, 속도, 단순함을 얻습니다.
+Windows판은 Windows API를 직접 부릅니다. Jetson Orin Nano용 데스크톱 앱은 JetPack의 GTK와 GStreamer를 사용합니다. 플랫폼별 구성은 [결정 기록 D32](DECISIONS.md#d32-jetson-orin-nano용-linux-패키지)에 있습니다.
 
 ### 11. 측정한 것만 말한다
 

@@ -24,6 +24,12 @@ pwsh scripts/package-msix.ps1        # MSIX 생성 (dist/)
 
 ## 대상
 
+### Jetson Orin Nano
+
+Debian 또는 Ubuntu에서 `./scripts/package-jetson.sh`를 실행하면 `dist/GongPlayer-Jetson-arm64.deb`가 생깁니다. JetPack Ubuntu 데스크톱에서 `sudo apt install ./GongPlayer-Jetson-arm64.deb`로 설치합니다. 플레이어의 실행 파일은 `/usr/bin/gongplayer`입니다. ARM64 Linux에서 소프트웨어 디코딩을 검증할 때는 패키지 의존성과 Xvfb를 설치한 뒤, 1~3초 길이의 영상 두 개로 `xvfb-run -a python3 linux/test_repeat.py first.mp4 second.mp4`를 실행합니다.
+
+### Windows
+
 | 항목 | 값 |
 |---|---|
 | OS | Windows 10 이상 |

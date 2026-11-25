@@ -44,6 +44,7 @@ pub enum Element {
     Back,
     Play,
     Forward,
+    Repeat,
     Speed,
     Mute,
     Volume,
@@ -77,6 +78,7 @@ pub struct Layout {
     pub back: Rect,
     pub play: Rect,
     pub forward: Rect,
+    pub repeat: Rect,
     pub time: Rect,
     pub speed: Rect,
     pub mute: Rect,
@@ -117,6 +119,8 @@ impl Layout {
         let play = row(x, bh);
         x += bh + GAP * s;
         let forward = row(x, bh);
+        x += bh + GAP * s;
+        let repeat = row(x, bh);
         x += bh + GAP * s * 3.0;
         let time = row(x, TIME_W * s);
 
@@ -147,6 +151,7 @@ impl Layout {
             back,
             play,
             forward,
+            repeat,
             time,
             speed,
             mute,
@@ -164,7 +169,7 @@ impl Layout {
 
     /// 창이 너무 좁으면 오른쪽 버튼 무리를 숨깁니다.
     pub fn show_right(&self) -> bool {
-        self.speed.left >= self.forward.right
+        self.speed.left >= self.repeat.right
     }
 
     /// `(x, y)`에 있는 요소. 컨트롤 바가 보이지 않으면 모두 영상입니다.
@@ -179,6 +184,7 @@ impl Layout {
             (self.back, Element::Back),
             (self.play, Element::Play),
             (self.forward, Element::Forward),
+            (self.repeat, Element::Repeat),
         ];
         if self.show_right() {
             items.extend([
@@ -288,6 +294,7 @@ mod tests {
             (l.back, Element::Back),
             (l.play, Element::Play),
             (l.forward, Element::Forward),
+            (l.repeat, Element::Repeat),
             (l.speed, Element::Speed),
             (l.mute, Element::Mute),
             (l.volume_hit, Element::Volume),
@@ -340,6 +347,10 @@ mod tests {
         let l = Layout::new(200.0, 300.0, 1.0);
         assert!(!l.show_right());
         assert!(!l.show_time());
+        assert_eq!(
+            l.hit(l.repeat.center_x(), l.repeat.center_y(), true),
+            Element::Repeat
+        );
         assert_ne!(
             l.hit(l.fullscreen.center_x(), l.fullscreen.center_y(), true),
             Element::Fullscreen

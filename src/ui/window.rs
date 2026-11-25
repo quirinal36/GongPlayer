@@ -598,6 +598,7 @@ impl App {
             Element::Back => self.command(Command::SeekBy(-super::input::SEEK_SHORT)),
             Element::Forward => self.command(Command::SeekBy(super::input::SEEK_SHORT)),
             Element::Play => self.command(Command::TogglePlay),
+            Element::Repeat => self.command(Command::ToggleRepeat),
             Element::Speed => self.command(Command::SpeedCycle),
             Element::Mute => self.command(Command::ToggleMute),
             Element::Fullscreen => self.toggle_fullscreen(),
@@ -752,6 +753,7 @@ impl App {
             o.controls = self.controls;
             o.hover = self.hover;
             o.playing = st.is_playing();
+            o.repeat = st.repeat();
             o.volume = st.volume();
             o.muted = st.muted();
             o.speed = st.speed();
@@ -773,6 +775,7 @@ impl App {
         *self.shared.clock.lock().unwrap() = crate::clock::Clock::new();
         self.shared.audio_obs.clear();
         self.player.opening();
+        self.last_seek_epoch = 0;
         self.info = None;
         self.error = None;
         self.drag_preview = None;
@@ -836,11 +839,8 @@ impl App {
                 }
                 Event::Ended { sid, epoch } if sid == self.current_sid() => {
                     if epoch >= self.last_seek_epoch && self.player.pending_seek().is_none() {
-                        self.player.ended();
-                        if let Some(s) = &self.session {
-                            s.set_paused(true);
-                        }
-                        self.apply(Vec::new());
+                        let fx = self.player.ended();
+                        self.apply(fx);
                     }
                 }
                 Event::Warning(text) => {

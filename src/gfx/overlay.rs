@@ -394,6 +394,22 @@ impl Overlay {
         }
 
         let f = self.formats.as_ref().unwrap();
+        self.hover_bg(st, Element::Repeat, l.repeat);
+        self.text(
+            "반복",
+            l.repeat,
+            &f.small,
+            DWRITE_TEXT_ALIGNMENT_CENTER,
+            false,
+        );
+        if st.repeat {
+            self.circle(
+                l.repeat.center_x(),
+                l.repeat.bottom - 5.0 * s,
+                2.0 * s,
+                &self.white,
+            );
+        }
         if l.show_time() {
             let text = if st.duration > 0.0 {
                 let hours = st.duration >= 3600.0;

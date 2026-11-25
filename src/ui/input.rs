@@ -24,6 +24,7 @@ pub mod vk {
     pub const DOWN: u16 = 0x28;
     pub const F: u16 = 0x46;
     pub const K: u16 = 0x4B;
+    pub const L: u16 = 0x4C;
     pub const M: u16 = 0x4D;
     pub const O: u16 = 0x4F;
     /// `[`
@@ -46,6 +47,7 @@ pub fn map_key(key: u16, shift: bool, ctrl: bool) -> Option<Action> {
     let seek = if shift { SEEK_LONG } else { SEEK_SHORT };
     Some(match key {
         vk::SPACE | vk::K => P(TogglePlay),
+        vk::L => P(ToggleRepeat),
         vk::LEFT => P(SeekBy(-seek)),
         vk::RIGHT => P(SeekBy(seek)),
         vk::HOME => P(Home),
@@ -79,6 +81,7 @@ mod tests {
         let p = |c| Some(Action::Player(c));
         assert_eq!(map_key(vk::SPACE, false, false), p(TogglePlay));
         assert_eq!(map_key(vk::K, false, false), p(TogglePlay));
+        assert_eq!(map_key(vk::L, false, false), p(ToggleRepeat));
         assert_eq!(map_key(vk::LEFT, false, false), p(SeekBy(-5.0)));
         assert_eq!(map_key(vk::RIGHT, false, false), p(SeekBy(5.0)));
         assert_eq!(map_key(vk::LEFT, true, false), p(SeekBy(-30.0)));

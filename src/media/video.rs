@@ -90,6 +90,7 @@ pub enum Recv {
 }
 
 fn has_d3d11va(codec: *const sys::AVCodec) -> bool {
+    let device_ctx: i32 = sys::AV_CODEC_HW_CONFIG_METHOD_HW_DEVICE_CTX.0 as _;
     let mut i = 0;
     loop {
         let cfg = unsafe { sys::avcodec_get_hw_config(codec, i) };
@@ -98,7 +99,7 @@ fn has_d3d11va(codec: *const sys::AVCodec) -> bool {
         }
         unsafe {
             if (*cfg).device_type == sys::AVHWDeviceType::D3D11VA
-                && ((*cfg).methods & sys::AV_CODEC_HW_CONFIG_METHOD_HW_DEVICE_CTX.0) != 0
+                && ((*cfg).methods & device_ctx) != 0
             {
                 return true;
             }
@@ -296,10 +297,10 @@ impl VideoDecoder {
         }
         let (width, height) = (f.width.max(1) as u32, f.height.max(1) as u32);
         let color = color::classify(
-            f.colorspace.0,
-            f.color_primaries.0,
-            f.color_trc.0,
-            f.color_range.0,
+            f.colorspace.0 as _,
+            f.color_primaries.0 as _,
+            f.color_trc.0 as _,
+            f.color_range.0 as _,
             height,
         );
 

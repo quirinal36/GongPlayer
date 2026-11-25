@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Name=GongPlayer
+Comment=Play and repeat a local video
+Comment[ko]=동영상 한 편을 열고 반복 재생합니다
+Exec=gongplayer %f
+Icon=gongplayer
+Terminal=false
+Categories=AudioVideo;Player;
+MimeType=video/mp4;video/quicktime;video/x-matroska;video/webm;video/mp2t;video/x-msvideo;

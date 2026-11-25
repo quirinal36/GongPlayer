@@ -22,6 +22,7 @@ pub enum State {
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum Command {
     TogglePlay,
+    ToggleRepeat,
     /// 현재 위치(또는 아직 처리되지 않은 탐색 목표)에서 상대 이동.
     SeekBy(f64),
     /// 절대 위치로 이동. `precise`가 거짓이면 가까운 키프레임을 보여 줍니다.
@@ -56,6 +57,7 @@ pub enum Effect {
 #[derive(Debug, Clone)]
 pub struct Player {
     state: State,
+    repeat: bool,
     speed_index: usize,
     volume: u32,
     muted: bool,
@@ -73,6 +75,7 @@ impl Player {
     pub fn new() -> Self {
         Self {
             state: State::Empty,
+            repeat: false,
             speed_index: NORMAL_SPEED,
             volume: 100,
             muted: false,
@@ -99,6 +102,9 @@ impl Player {
     pub fn is_playing(&self) -> bool {
         self.state == State::Playing
     }
+    pub fn repeat(&self) -> bool {
+        self.repeat
+    }
     /// 미디어가 열려 조작할 수 있는 상태인가.
     pub fn has_media(&self) -> bool {
         matches!(self.state, State::Playing | State::Paused | State::Ended)
@@ -117,6 +123,7 @@ impl Player {
     /// 파일을 열기 시작했습니다. 배속과 음량은 이전 파일의 것을 이어 씁니다.
     pub fn opening(&mut self) {
         self.state = State::Opening;
+        self.repeat = false;
         self.pending_seek = None;
         self.duration = 0.0;
     }
@@ -137,10 +144,18 @@ impl Player {
         self.pending_seek = None;
     }
 
-    pub fn ended(&mut self) {
-        if self.state == State::Playing {
-            self.state = State::Ended;
+    pub fn ended(&mut self) -> Vec<Effect> {
+        let mut fx = Vec::new();
+        if !self.is_playing() {
+            return fx;
         }
+        if self.repeat {
+            self.seek(0.0, true, &mut fx);
+        } else {
+            self.state = State::Ended;
+            fx.push(Effect::Pause(true));
+        }
+        fx
     }
 
     /// 탐색이 끝나 새 프레임이 나왔습니다.
@@ -199,17 +214,21 @@ impl Player {
                     self.state = State::Playing;
                     fx.push(Effect::Pause(false));
                 }
-                State::Ended => {
-                    self.state = State::Playing;
-                    self.pending_seek = Some(0.0);
-                    fx.push(Effect::Seek {
-                        target: 0.0,
-                        precise: true,
-                    });
-                    fx.push(Effect::Pause(false));
-                }
+                State::Ended => self.seek(0.0, true, &mut fx),
                 _ => {}
             },
+            Command::ToggleRepeat => {
+                self.repeat = !self.repeat;
+                let text = if self.repeat {
+                    "반복 켜짐"
+                } else {
+                    "반복 꺼짐"
+                };
+                fx.push(Effect::Osd(text.into()));
+                if self.repeat && self.state == State::Ended {
+                    self.seek(0.0, true, &mut fx);
+                }
+            }
             Command::SeekBy(delta) => {
                 let base = self.pending_seek.unwrap_or(position);
                 let target = self.clamp(base + delta);
@@ -387,7 +406,7 @@ mod tests {
     #[test]
     fn play_after_end_restarts() {
         let mut p = playing(30.0);
-        p.ended();
+        assert_eq!(p.ended(), vec![Effect::Pause(true)]);
         assert_eq!(p.state(), State::Ended);
         let fx = p.handle(Command::TogglePlay, 30.0);
         assert_eq!(
@@ -407,8 +426,59 @@ mod tests {
     fn ended_is_ignored_while_paused() {
         let mut p = playing(30.0);
         p.handle(Command::TogglePlay, 1.0);
-        p.ended();
+        p.handle(Command::ToggleRepeat, 1.0);
+        assert!(p.ended().is_empty());
         assert_eq!(p.state(), State::Paused);
+    }
+
+    #[test]
+    fn repeat_rewinds_each_time_until_switched_off() {
+        let mut p = playing(30.0);
+        assert_eq!(
+            p.handle(Command::ToggleRepeat, 15.0),
+            vec![Effect::Osd("반복 켜짐".into())]
+        );
+        assert!(p.repeat());
+        for _ in 0..3 {
+            assert_eq!(
+                p.ended(),
+                vec![Effect::Seek {
+                    target: 0.0,
+                    precise: true
+                }]
+            );
+            assert!(p.is_playing());
+            assert_eq!(p.pending_seek(), Some(0.0));
+            p.seek_settled();
+        }
+        assert_eq!(
+            p.handle(Command::ToggleRepeat, 10.0),
+            vec![Effect::Osd("반복 꺼짐".into())]
+        );
+        assert!(!p.repeat());
+        assert_eq!(p.ended(), vec![Effect::Pause(true)]);
+        assert_eq!(p.state(), State::Ended);
+    }
+
+    #[test]
+    fn enabling_repeat_after_end_restarts_only_this_file() {
+        let mut p = playing(30.0);
+        p.ended();
+        assert_eq!(
+            p.handle(Command::ToggleRepeat, 30.0),
+            vec![
+                Effect::Osd("반복 켜짐".into()),
+                Effect::Seek {
+                    target: 0.0,
+                    precise: true
+                },
+                Effect::Pause(false),
+            ]
+        );
+        assert!(p.is_playing());
+        p.opening();
+        p.opened(10.0);
+        assert_eq!(p.ended(), vec![Effect::Pause(true)]);
     }
 
     #[test]

@@ -1,0 +1,301 @@
+#!/usr/bin/python3
+"""Jetson Linux 데스크톱용 GongPlayer."""
+import sys
+import time
+from pathlib import Path
+
+import gi
+
+gi.require_version("Gdk", "3.0")
+gi.require_version("Gtk", "3.0")
+gi.require_version("Gst", "1.0")
+from gi.repository import Gdk, Gio, GLib, Gst, Gtk
+
+
+SPEEDS = (0.5, 0.75, 1.0, 1.25, 1.5, 1.75, 2.0, 3.0, 4.0)
+
+
+def clock_text(seconds):
+    minutes, seconds = divmod(int(seconds), 60)
+    hours, minutes = divmod(minutes, 60)
+    return (f"{hours}:{minutes:02d}" if hours else str(minutes)) + f":{seconds:02d}"
+
+
+class Player(Gtk.Window):
+    def __init__(self):
+        super().__init__(title="GongPlayer")
+        self.set_default_size(880, 500)
+        self.connect("destroy", self.close_player)
+        self.connect("key-press-event", self.key)
+        self.connect("drag-data-received", self.drop_file)
+        self.drag_dest_set(Gtk.DestDefaults.ALL, [], Gdk.DragAction.COPY)
+        self.drag_dest_add_uri_targets()
+
+        self.player = Gst.ElementFactory.make("playbin")
+        sink = Gst.ElementFactory.make("gtksink")
+        if self.player is None or sink is None:
+            raise RuntimeError("GStreamer의 playbin과 gtksink 플러그인이 필요합니다.")
+        self.player.set_property("video-sink", sink)
+        tempo = Gst.ElementFactory.make("scaletempo")
+        if tempo:
+            self.player.set_property("audio-filter", tempo)
+        if Gst.ElementFactory.find("nvvidconv"):
+            # Jetson 디코더의 NVMM 프레임을 GTK가 표시할 수 있는 형식으로 바꿉니다.
+            self.player.set_property("video-filter", Gst.ElementFactory.make("nvvidconv"))
+        self.bus = self.player.get_bus()
+        self.bus.add_signal_watch()
+        self.bus.connect("message", self.message)
+        self.path = None
+        self.playing = self.ended = self.full = False
+        self.rate = 1.0
+        self.unmute_volume = 1.0
+        self.duration = 0.0
+        self.hide_after = 0
+
+        box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
+        self.add(box)
+        event_box = Gtk.EventBox()
+        event_box.add(sink.get_property("widget"))
+        event_box.connect("button-press-event", self.video_click)
+        event_box.add_events(Gdk.EventMask.POINTER_MOTION_MASK | Gdk.EventMask.LEAVE_NOTIFY_MASK)
+        event_box.connect("motion-notify-event", self.reveal)
+        event_box.connect("leave-notify-event", self.reveal)
+        box.pack_start(event_box, True, True, 0)
+        self.notice = Gtk.Label(label="동영상을 끌어다 놓거나 열기 버튼을 누르세요.")
+        self.notice.set_line_wrap(True)
+        box.pack_start(self.notice, False, False, 2)
+        self.controls = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
+        box.pack_start(self.controls, False, False, 0)
+        self.seek_bar = Gtk.Scale.new_with_range(Gtk.Orientation.HORIZONTAL, 0, 1, 0.1)
+        self.seek_bar.set_draw_value(False)
+        self.seek_bar.set_sensitive(False)
+        self.seek_bar.connect("change-value", self.scrub)
+        self.controls.pack_start(self.seek_bar, False, False, 0)
+        row = Gtk.Box(spacing=4)
+        row.set_border_width(4)
+        self.controls.pack_start(row, False, False, 0)
+
+        def button(label, action):
+            widget = Gtk.Button(label=label)
+            widget.connect("clicked", lambda _: action())
+            row.pack_start(widget, False, False, 0)
+            return widget
+
+        button("열기", self.choose)
+        self.play = button("재생", self.toggle_play)
+        self.repeat = Gtk.ToggleButton(label="반복")
+        self.repeat.set_tooltip_text("현재 영상 반복 (L)")
+        self.repeat.connect("toggled", self.toggle_repeat)
+        row.pack_start(self.repeat, False, False, 0)
+        self.time = Gtk.Label(label="0:00 / 0:00")
+        row.pack_start(self.time, True, True, 0)
+        self.speed = Gtk.ComboBoxText()
+        for rate in SPEEDS:
+            self.speed.append_text(f"{rate:g}×")
+        self.speed.set_active(SPEEDS.index(1.0))
+        self.speed.connect("changed", self.change_speed)
+        row.pack_start(self.speed, False, False, 0)
+        self.volume = Gtk.VolumeButton()
+        self.volume.set_value(1.0)
+        self.volume.connect("value-changed", lambda _, v: self.player.set_property("volume", v))
+        row.pack_start(self.volume, False, False, 0)
+        button("전체화면", self.toggle_fullscreen)
+        self.update_buttons()
+        self.timer = GLib.timeout_add(250, self.refresh)
+
+    def update_buttons(self):
+        self.play.set_sensitive(self.path is not None)
+        self.repeat.set_sensitive(self.path is not None)
+        self.speed.set_sensitive(self.path is not None)
+        self.play.set_label("일시정지" if self.playing else "재생")
+        self.reveal()
+
+    def reveal(self, _=None, event=None):
+        self.controls.show()
+        self.hide_after = 0 if event and event.type == Gdk.EventType.LEAVE_NOTIFY else time.monotonic() + 2
+
+    def open_file(self, filename):
+        path = Path(filename).resolve()
+        if not path.is_file():
+            self.show_notice(f"파일을 열 수 없습니다: {path}")
+            return
+        self.player.set_state(Gst.State.NULL)
+        self.bus.set_flushing(True)
+        self.bus.set_flushing(False)
+        self.path = path
+        self.ended = False
+        self.repeat.set_active(False)
+        self.rate = 1.0
+        self.speed.set_active(SPEEDS.index(1.0))
+        self.duration = 0.0
+        self.seek_bar.set_value(0)
+        self.seek_bar.set_sensitive(False)
+        self.time.set_text("0:00 / 0:00")
+        self.notice.hide()
+        self.set_title(path.name + " — GongPlayer")
+        self.player.set_property("uri", path.as_uri())
+        self.set_playing(True)
+
+    def choose(self):
+        dialog = Gtk.FileChooserDialog(title="동영상 열기", transient_for=self,
+                                       action=Gtk.FileChooserAction.OPEN)
+        dialog.add_buttons("취소", Gtk.ResponseType.CANCEL, "열기", Gtk.ResponseType.OK)
+        if dialog.run() == Gtk.ResponseType.OK:
+            self.open_file(dialog.get_filename())
+        dialog.destroy()
+
+    def drop_file(self, _, context, x, y, selection, info, timestamp):
+        uris = selection.get_uris()
+        path = Gio.File.new_for_uri(uris[0]).get_path() if uris else None
+        if path:
+            self.open_file(path)
+        Gtk.drag_finish(context, bool(path), False, timestamp)
+
+    def show_notice(self, text):
+        self.notice.set_text(text)
+        self.notice.show()
+
+    def set_playing(self, playing):
+        self.player.set_state(Gst.State.PLAYING if playing else Gst.State.PAUSED)
+        self.playing = playing
+        self.update_buttons()
+
+    def toggle_play(self):
+        if self.path:
+            if self.ended:
+                if not self.seek(0):
+                    return
+            self.set_playing(not self.playing)
+
+    def toggle_repeat(self, button):
+        enabled = button.get_active()
+        button.set_label("반복 켜짐" if enabled else "반복")
+        if enabled and self.ended:
+            self.toggle_play()
+
+    def seek(self, seconds, rate=None):
+        if self.path is None:
+            return False
+        seconds = max(0, min(seconds, self.duration) if self.duration else seconds)
+        ok = self.player.seek(self.rate if rate is None else rate, Gst.Format.TIME,
+                              Gst.SeekFlags.FLUSH | Gst.SeekFlags.ACCURATE,
+                              Gst.SeekType.SET, int(seconds * Gst.SECOND), Gst.SeekType.NONE, -1)
+        if ok:
+            self.ended = False
+        return ok
+
+    def position(self):
+        ok, ns = self.player.query_position(Gst.Format.TIME)
+        return ns / Gst.SECOND if ok and ns >= 0 else 0
+
+    def scrub(self, _, scroll, seconds):
+        if self.seek(seconds):
+            self.seek_bar.set_value(seconds)
+        return True
+
+    def change_speed(self, combo):
+        rate = SPEEDS[combo.get_active()]
+        if rate != self.rate:
+            if self.ended or self.seek(self.position(), rate):
+                self.rate = rate
+            else:
+                combo.set_active(SPEEDS.index(self.rate))
+
+    def refresh(self):
+        if self.full and self.playing and self.hide_after and time.monotonic() > self.hide_after:
+            self.controls.hide()
+        if self.path:
+            ok, duration = self.player.query_duration(Gst.Format.TIME)
+            if ok and duration > 0:
+                seconds = duration / Gst.SECOND
+                if seconds != self.duration:
+                    self.duration = seconds
+                    self.seek_bar.set_range(0, seconds)
+                    self.seek_bar.set_sensitive(True)
+                pos = self.duration if self.ended else self.position()
+                self.seek_bar.set_value(pos)
+                self.time.set_text(f"{clock_text(pos)} / {clock_text(seconds)}")
+        return True
+
+    def message(self, _, msg):
+        if msg.type == Gst.MessageType.EOS and self.path:
+            if self.repeat.get_active() and self.playing and self.seek(0):
+                return
+            self.ended = True
+            self.set_playing(False)
+        elif msg.type == Gst.MessageType.ERROR:
+            error, _ = msg.parse_error()
+            self.player.set_state(Gst.State.NULL)
+            self.path = None
+            self.playing = self.ended = False
+            self.repeat.set_active(False)
+            self.seek_bar.set_sensitive(False)
+            self.update_buttons()
+            self.show_notice(f"재생할 수 없습니다: {error.message}")
+
+    def toggle_fullscreen(self):
+        self.full = not self.full
+        self.reveal()
+        if self.full:
+            self.fullscreen()
+        else:
+            self.unfullscreen()
+
+    def video_click(self, _, event):
+        if event.button == 1:
+            # 더블클릭의 첫 클릭으로 바뀐 재생 상태를 두 번째 클릭에서 복원합니다.
+            if event.type == Gdk.EventType.BUTTON_PRESS:
+                self.toggle_play()
+            elif event.type == Gdk.EventType.DOUBLE_BUTTON_PRESS:
+                self.toggle_fullscreen()
+        return False
+
+    def key(self, _, event):
+        self.reveal()
+        key = Gdk.keyval_name(event.keyval).lower()
+        if event.state & Gdk.ModifierType.CONTROL_MASK:
+            if key != "o":
+                return False
+            self.choose()
+        elif key in ("space", "k"):
+            self.toggle_play()
+        elif key == "l" and self.path:
+            self.repeat.set_active(not self.repeat.get_active())
+        elif key in ("f", "return") or (key == "escape" and self.full):
+            self.toggle_fullscreen()
+        elif key == "home":
+            self.seek(0)
+        elif key in ("left", "right"):
+            step = 30 if event.state & Gdk.ModifierType.SHIFT_MASK else 5
+            self.seek(self.position() + (step if key == "right" else -step))
+        elif key in ("up", "down"):
+            step = 0.05 if key == "up" else -0.05
+            self.volume.set_value(max(0, min(1, self.volume.get_value() + step)))
+        elif key == "m":
+            volume = self.volume.get_value()
+            if volume:
+                self.unmute_volume = volume
+            self.volume.set_value(0 if volume else self.unmute_volume)
+        elif key in ("bracketleft", "bracketright", "backspace"):
+            index = SPEEDS.index(1.0)
+            if key != "backspace":
+                index = SPEEDS.index(self.rate) + (1 if key == "bracketright" else -1)
+            self.speed.set_active(max(0, min(len(SPEEDS) - 1, index)))
+        else:
+            return False
+        return True
+
+    def close_player(self, *_):
+        GLib.source_remove(self.timer)
+        self.bus.remove_signal_watch()
+        self.player.set_state(Gst.State.NULL)
+        Gtk.main_quit()
+
+
+if __name__ == "__main__":
+    Gst.init(None)
+    window = Player()
+    window.show_all()
+    if len(sys.argv) > 1:
+        window.open_file(sys.argv[1])
+    Gtk.main()
